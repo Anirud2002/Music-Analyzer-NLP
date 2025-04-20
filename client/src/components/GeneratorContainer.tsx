@@ -18,10 +18,37 @@ import {
 import "./GeneratorContainer.css";
 import Skeleton from "./Skeleton";
 import { logoIonic, sparkles } from "ionicons/icons";
+import { useState } from "react";
 
 interface ContainerProps {}
 
 const GeneratorContainer: React.FC<ContainerProps> = () => {
+  const [data, setData] = useState(null);
+  const [inputValue, setInputValue] = useState("");
+  const api_url = new URL("localhost:5000/api/gen_playlist");
+
+  const handleClick = async () => {
+    const response = await fetch(api_url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        playlist_name: inputValue,
+        library_songs: [ {title: "asdf"}, {title: "qwer"}, {title: "nfliu"} ],
+        playlist_size: 2,
+    }),
+    });
+    const data = await response.json(); 
+    setData(data);
+  };
+
+  const updateInputValue = (event: CustomEvent) => {
+    const value = event.detail.value;
+    setInputValue(value);
+  }
+
+
   return (
     <div id="container">
       <IonGrid>
@@ -33,7 +60,7 @@ const GeneratorContainer: React.FC<ContainerProps> = () => {
               </IonCardHeader>
               <IonCardContent class="ion-no-padding ion-padding-vertical">
                 <IonItem>
-                  <IonInput placeholder="Ex: Hard Rock"></IonInput>
+                  <IonInput placeholder="Ex: Hard Rock" onIonInput={updateInputValue}></IonInput>
                 </IonItem>
               </IonCardContent>
 
@@ -42,6 +69,9 @@ const GeneratorContainer: React.FC<ContainerProps> = () => {
                 <IonIcon
                   icon={sparkles}
                   className="ion-padding-horizontal"
+                  onClick={
+                    handleClick
+                  }
                 ></IonIcon>
               </IonButton>
             </IonCard>

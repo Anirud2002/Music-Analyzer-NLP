@@ -38,7 +38,7 @@ const Home: React.FC = () => {
       });
     }
   }, []);
-
+ 
   return (
     <IonPage>
       <IonHeader>
