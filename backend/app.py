@@ -34,13 +34,14 @@ def get_data():
     data = {'message': 'Hello from Flask!'}
     return jsonify(data)
 
-@app.route('api/gen_playlist', methods=['POST'])
+@app.route('/api/gen_playlist', methods=['POST'])
 def gen_playlist():
-    playlist_name = request.form.get('playlist_name')
-    library_songs = request.form.get('library_songs')
-    playlist_size = request.form.get('top_n')
+    data = request.get_json()
+    playlist_name = data['playlist_name']
+    library_songs = data['library_songs']
+    playlist_size = data['playlist_size']
 
-    titles = [song.title for song in library_songs]
+    titles = [song['title'] for song in library_songs]
 
     playlist_vector = encode_text([playlist_name])[0]
     song_vectors = encode_text(titles)
