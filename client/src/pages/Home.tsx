@@ -13,11 +13,14 @@ import { generateRandomString, generateCodeChallenge } from "../auth/pkce";
 
 const CLIENT_ID = "f0ed18bc71304925886e4b313fe5777c";
 const REDIRECT_URI = "http://[::1]:5173/callback"; // adjust for deployment
-const SCOPES = "playlist-modify-public playlist-modify-private";
+// const SCOPES =
+//   "playlist-modify-public playlist-modify-private user-library-read";
+const SCOPES = "user-library-read user-top-read";
 
 const Home: React.FC = () => {
   useEffect(() => {
     const accessToken = localStorage.getItem("spotify_access_token");
+    const spotifyUserId = localStorage.getItem("spotify_user_id");
 
     // If no access token, initiate PKCE flow
     if (!accessToken) {
@@ -36,6 +39,42 @@ const Home: React.FC = () => {
         // Redirect user to Spotify auth page
         window.location.href = authUrl.toString();
       });
+    }
+
+    if (!spotifyUserId) {
+      if (accessToken) {
+        fetch("https://api.spotify.com/v1/me", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+            localStorage.setItem("spotify_user_id", data.id);
+          });
+      }
+    }
+
+    if (accessToken) {
+      fetch("https://api.spotify.com/v1/me/tracks?limit=50", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            const errorText = await response.text(); // read plain text if not valid JSON
+            throw new Error(`Spotify error: ${response.status} - ${errorText}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log("Tracks:", data);
+        })
+        .catch((err) => {
+          console.error("Fetch error:", err.message);
+        });
     }
   }, []);
  

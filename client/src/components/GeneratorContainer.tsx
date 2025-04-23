@@ -17,15 +17,45 @@ import {
 } from "@ionic/react";
 import "./GeneratorContainer.css";
 import Skeleton from "./Skeleton";
-import { logoIonic, sparkles } from "ionicons/icons";
-import { useState } from "react";
+import { logoIonic, sparkles, add } from "ionicons/icons";
+import { useEffect, useState } from "react";
 
 interface ContainerProps {}
 
 const GeneratorContainer: React.FC<ContainerProps> = () => {
   const [data, setData] = useState(null);
+  const [userSongs, setUserSongs] = useState(null);
   const [inputValue, setInputValue] = useState("");
-  const api_url = new URL("localhost:5000/api/gen_playlist");
+  const api_url = new URL("http://127.0.0.1:5000/api/gen_playlist");
+  const accessToken = localStorage.getItem("spotify_access_token");
+
+  useEffect(() => {
+    if (accessToken) {
+      fetch("https://api.spotify.com/v1/me/tracks?limit=50", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            const errorText = await response.text(); // read plain text if not valid JSON
+            throw new Error(`Spotify error: ${response.status} - ${errorText}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          var simplifiedData = data.items.map((item: any) => ({
+            title: item.track.name,
+            uri: item.track.uri,
+          }));
+
+          setUserSongs(simplifiedData);
+        })
+        .catch((err) => {
+          console.error("Fetch error:", err.message);
+        });
+    }
+  }, []);
 
   const handleClick = async () => {
     const response = await fetch(api_url, {
@@ -33,21 +63,20 @@ const GeneratorContainer: React.FC<ContainerProps> = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         playlist_name: inputValue,
-        library_songs: [ {title: "asdf"}, {title: "qwer"}, {title: "nfliu"} ],
+        library_songs: userSongs,
         playlist_size: 2,
-    }),
+      }),
     });
-    const data = await response.json(); 
+    const data = await response.json();
     setData(data);
   };
 
   const updateInputValue = (event: CustomEvent) => {
     const value = event.detail.value;
     setInputValue(value);
-  }
-
+  };
 
   return (
     <div id="container">
@@ -60,18 +89,18 @@ const GeneratorContainer: React.FC<ContainerProps> = () => {
               </IonCardHeader>
               <IonCardContent class="ion-no-padding ion-padding-vertical">
                 <IonItem>
-                  <IonInput placeholder="Ex: Hard Rock" onIonInput={updateInputValue}></IonInput>
+                  <IonInput
+                    placeholder="Ex: Hard Rock"
+                    onIonInput={updateInputValue}
+                  ></IonInput>
                 </IonItem>
               </IonCardContent>
 
-              <IonButton expand="block">
+              <IonButton expand="block" onClick={handleClick}>
                 Generate
                 <IonIcon
                   icon={sparkles}
                   className="ion-padding-horizontal"
-                  onClick={
-                    handleClick
-                  }
                 ></IonIcon>
               </IonButton>
             </IonCard>
@@ -91,6 +120,14 @@ const GeneratorContainer: React.FC<ContainerProps> = () => {
                 ))}
               </IonCardContent>
             </IonCard>
+            <IonButton expand="block" color="secondary">
+              <IonIcon
+                slot="start"
+                icon={add}
+                className="ion-padding-horizontal"
+              />
+              Create Playlist
+            </IonButton>
           </IonCol>
         </IonRow>
       </IonGrid>
