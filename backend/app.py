@@ -3,9 +3,13 @@ from flask_cors import CORS
 from joblib import dump, load
 from transformers import BertTokenizer, BertModel
 import torch
+import pandas as pd
+import kagglehub
 
 app = Flask(__name__)
 CORS(app)
+lyrics_path = kagglehub.dataset_download("carlosgdcj/genius-song-lyrics-with-language-information") + '/song_lyrics.csv'
+df_lyrics = pd.read_csv(lyrics_path)
 
 def encode_text(batch):
     """
@@ -36,6 +40,7 @@ def get_data():
 
 @app.route('/api/gen_playlist', methods=['POST'])
 def gen_playlist():
+    #[{song_id, title, lyrics}]
     data = request.get_json()
     playlist_name = data['playlist_name']
     library_songs = data['library_songs']

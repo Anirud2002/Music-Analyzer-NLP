@@ -46,6 +46,7 @@ const GeneratorContainer: React.FC<ContainerProps> = () => {
           return response.json();
         })
         .then((data) => {
+          console.log("Fetched user songs:", data);
           var simplifiedData = data.items.map((item: any) => ({
             title: item.track.name,
             uri: item.track.uri,
