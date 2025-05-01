@@ -8,8 +8,6 @@ import kagglehub
 
 app = Flask(__name__)
 CORS(app)
-lyrics_path = kagglehub.dataset_download("carlosgdcj/genius-song-lyrics-with-language-information") + '/song_lyrics.csv'
-df_lyrics = pd.read_csv(lyrics_path)
 
 def encode_text(batch):
     """
@@ -46,22 +44,23 @@ def gen_playlist():
     library_songs = data['library_songs']
     playlist_size = data['playlist_size']
 
+    song_ids = [song['uri'] for song in library_songs]
     titles = [song['title'] for song in library_songs]
+    artists = [song['artist'] for song in library_songs]
 
-    playlist_vector = encode_text([playlist_name])[0]
-    song_vectors = encode_text(titles)
+    song_data_list = []
+    for i in range(len(song_ids)):
+        song_data_list.append(SongData(song_ids[i], titles[i], artists[i]))
 
-    loaded_model = load('../logistic_regression_model_joblib.pkl')
+    loaded_model = load('../model.joblib')
+    predictions = loaded_model.fit_predict(playlist_name, song_data_list, playlist_size)
+    return jsonify(predictions)
 
-    predictions = []
-    for i in range(len(song_vectors)):
-        pred_prob = loaded_model.predict_proba([playlist_vector + song_vectors[i]])
-        predictions.append((titles[i], pred_prob[0][1]))
-
-    predictions = sorted(predictions, key=lambda x: x[1])
-    top_n_songs = predictions[0:playlist_size]
-
-    return jsonify(top_n_songs)
+class SongData:
+    def __init__(self, song_id, title, artist):
+        self.song_id = song_id
+        self.title = title
+        self.artist = artist
 
 if __name__ == '__main__':
     app.run(debug=True)
