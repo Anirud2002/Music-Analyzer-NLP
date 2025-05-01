@@ -50,34 +50,12 @@ const Home: React.FC = () => {
         })
           .then((response) => response.json())
           .then((data) => {
-            console.log(data);
             localStorage.setItem("spotify_user_id", data.id);
           });
       }
     }
-
-    if (accessToken) {
-      fetch("https://api.spotify.com/v1/me/tracks?limit=50", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-        .then(async (response) => {
-          if (!response.ok) {
-            const errorText = await response.text(); // read plain text if not valid JSON
-            throw new Error(`Spotify error: ${response.status} - ${errorText}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          console.log("Tracks:", data);
-        })
-        .catch((err) => {
-          console.error("Fetch error:", err.message);
-        });
-    }
   }, []);
- 
+
   return (
     <IonPage>
       <IonHeader>

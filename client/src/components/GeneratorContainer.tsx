@@ -24,12 +24,14 @@ interface ContainerProps {}
 
 const GeneratorContainer: React.FC<ContainerProps> = () => {
   const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [userSongs, setUserSongs] = useState(null);
   const [inputValue, setInputValue] = useState("");
   const api_url = new URL("http://127.0.0.1:5000/api/gen_playlist");
   const accessToken = localStorage.getItem("spotify_access_token");
 
   useEffect(() => {
+    setLoading(true);
     if (accessToken) {
       fetch("https://api.spotify.com/v1/me/tracks?limit=50", {
         headers: {
@@ -50,14 +52,19 @@ const GeneratorContainer: React.FC<ContainerProps> = () => {
           }));
 
           setUserSongs(simplifiedData);
+          console.log("User songs:", simplifiedData);
         })
         .catch((err) => {
           console.error("Fetch error:", err.message);
+        })
+        .finally(() => {
+          setLoading(false);
         });
     }
   }, []);
 
   const handleClick = async () => {
+    setLoading(true);
     const response = await fetch(api_url, {
       method: "POST",
       headers: {
@@ -66,11 +73,12 @@ const GeneratorContainer: React.FC<ContainerProps> = () => {
       body: JSON.stringify({
         playlist_name: inputValue,
         library_songs: userSongs,
-        playlist_size: 2,
+        playlist_size: 5,
       }),
-    });
+    }).finally(() => setLoading(false));
     const data = await response.json();
     setData(data);
+    console.log("Generated playlist:", data);
   };
 
   const updateInputValue = (event: CustomEvent) => {
@@ -110,14 +118,17 @@ const GeneratorContainer: React.FC<ContainerProps> = () => {
             <IonCard>
               <IonCardHeader>
                 <IonCardTitle>
-                  Your generated playlist will appear here!
+                  {loading
+                    ? "Generating..."
+                    : "Your generated playlist will appear here!"}
                 </IonCardTitle>
               </IonCardHeader>
 
               <IonCardContent class="ion-no-padding ion-padding-vertical">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Skeleton key={index} />
-                ))}
+                {loading &&
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <Skeleton key={index} />
+                  ))}
               </IonCardContent>
             </IonCard>
             <IonButton expand="block" color="secondary">
