@@ -50,6 +50,7 @@ const GeneratorContainer: React.FC<ContainerProps> = () => {
           var simplifiedData = data.items.map((item: any) => ({
             title: item.track.name,
             uri: item.track.uri,
+            artist: item.track.artists[0].name,
           }));
 
           setUserSongs(simplifiedData);
